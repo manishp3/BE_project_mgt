@@ -5,11 +5,18 @@ const { createHmac, randomBytes } = require("crypto")
 const { handleOptSender, verifyJwtToken } = require("../service/auth");
 
 async function getAllLogedInUser(req, res) {
-  const users = await signUp.find({})
+  const users = await signUp.find({},"_id email")
+  console.log("log of loggedin users::",users);
+  const formatedData=users.map((user)=>({
+    _id:user._id,
+    label:user.email,
+    value:user._id
+  }))
+  
   if (!users) {
     return res.status(404).json({ msg: "No Users!", success: false })
   }
-  return res.status(200).json({ msg: "Get All LoggedIn Users!", user: users })
+  return res.status(200).json({ msg: "Get All LoggedIn Users!", user: formatedData })
 }
 async function handleSignup(req, res) {
   try {

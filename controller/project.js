@@ -105,7 +105,7 @@ async function handleProjectDelete(req, res) {
 
     try {
         const dId = await Project.findByIdAndDelete({ _id: id })
-        await task_tbl.deleteMany({pro_ref:dId._id})
+        await task_tbl.deleteMany({ pro_ref: dId._id })
         return res.status(201).json({ msg: "Project Deleted!", success: true, data: dId._id })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in project delete!", success: false })

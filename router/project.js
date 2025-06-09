@@ -3,8 +3,8 @@ const { handleProjectCreate, handleProjectUpdate, handleProjectDelete, handleGet
 const router = express.Router();
 
 router.post("/project_c", (req, res) => {
-    console.log("log create project body::",req.body);
-    
+    console.log("log create project body::", req.body);
+
     handleProjectCreate(req, res)
 })
 router.get("/projects", (req, res) => {
