@@ -119,7 +119,7 @@ async function handleGetAllTasks(req, res) {
     const _id = req.params.pro_id
     console.log("_id::", _id);
 
-    const allTask = await task_tbl.find({ pro_ref: _id })
+    const allTask = await task_tbl.find({ pro_ref: _id }).sort({ createdAt: -1 })
     console.log("allTask::", allTask);
     if (!allTask) {
       return res.json({ msg: "No task Found!", success: false })

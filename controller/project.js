@@ -30,7 +30,7 @@ async function handleGetAllProjects(req, res) {
     console.log("handleGetAllProjects _id::", req.user);
 
     try {
-        const allProject = await Project.find({ pro_ref: _id })
+        const allProject = await Project.find({ pro_ref: _id }).sort({createdAt:-1})
         return res.status(200).json({ msg: "Projects Get Succesfully!", success: true, projects: allProject })
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get all projects!", success: false })
@@ -58,12 +58,20 @@ async function handleGetProject(req, res) {
     console.log("handleGetProject id ::", id);
 
     try {
-        const project = await Project.findOne({ _id: id })
+        const project = await Project.findOne({ _id: id }).populate("members","_id email")
+        
+        const transformedMembers = project.members.map(member => ({
+  value: member._id,
+  label: member.email,
+}));
+
+        console.log("project members ::",project);
+        
         if (!project) {
             return res.status(404).json({ msg: "project not found!", success: false })
 
         }
-        return res.status(200).json({ msg: "Project Get Succesfully!", success: true, project: project })
+        return res.status(200).json({ msg: "Project Get Succesfully!", success: true, project: {...project.toObject(),members:transformedMembers} })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in Get Single Projects!", success: false })
     }

@@ -40,8 +40,6 @@ app.use("/api", autRouter);
 
 // project api's
 app.use("/api", validateAuthToken("token"), projectRouter);
-
-
 app.use("/api", validateAuthToken("token"), taskRouter);
 app.listen(process.env.PORT, () =>
   console.log(`App started at port ${process.env.PORT}`)

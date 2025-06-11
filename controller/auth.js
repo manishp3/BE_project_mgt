@@ -123,7 +123,7 @@ async function handleSignin(req, res) {
           code: verificationCode
         })
       }
-      return res.cookie("token", token).status(200).json({ msg: "Signin success", success: true, token: token })
+      return res.cookie("token", token).status(200).json({ msg: "OTP sent successfully", success: true, token: token })
     }
 
     return res.status(401).json({ msg: "Unautheticated", success: false })
