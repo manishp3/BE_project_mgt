@@ -23,7 +23,11 @@ const proSchema = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "signup"
       }
-    ]
+    ],
+    is_star:{
+      type:Number,
+      default:0,
+    }
   },
   { timestamps: true }
 );

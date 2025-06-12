@@ -8,7 +8,7 @@ const autRouter = require("./router/auth");
 const projectRouter = require("./router/project");
 const taskRouter = require("./router/tasks");
 
-const cors=require("cors")
+const cors = require("cors")
 
 
 const fileUplader = require("express-fileupload")
@@ -17,8 +17,8 @@ app.use(express.urlencoded({ extended: false }));
 // enable for other router;
 // not valtion all bracnh ok
 app.use(cors({
-  origin:"http://localhost:3000",
-  credentials:true,
+  origin: "http://localhost:3000",
+  credentials: true,
 }))
 
 app.use(express.json())

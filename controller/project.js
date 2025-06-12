@@ -30,7 +30,7 @@ async function handleGetAllProjects(req, res) {
     console.log("handleGetAllProjects _id::", req.user);
 
     try {
-        const allProject = await Project.find({ pro_ref: _id }).sort({createdAt:-1})
+        const allProject = await Project.find({ pro_ref: _id }).sort({ createdAt: -1 })
         return res.status(200).json({ msg: "Projects Get Succesfully!", success: true, projects: allProject })
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get all projects!", success: false })
@@ -58,34 +58,34 @@ async function handleGetProject(req, res) {
     console.log("handleGetProject id ::", id);
 
     try {
-        const project = await Project.findOne({ _id: id }).populate("members","_id email")
-        
-        const transformedMembers = project.members.map(member => ({
-  value: member._id,
-  label: member.email,
-}));
+        const project = await Project.findOne({ _id: id }).populate("members", "_id email")
 
-        console.log("project members ::",project);
-        
+        const transformedMembers = project.members.map(member => ({
+            value: member._id,
+            label: member.email,
+        }));
+
+        console.log("project members ::", project);
+
         if (!project) {
             return res.status(404).json({ msg: "project not found!", success: false })
 
         }
-        return res.status(200).json({ msg: "Project Get Succesfully!", success: true, project: {...project.toObject(),members:transformedMembers} })
+        return res.status(200).json({ msg: "Project Get Succesfully!", success: true, project: { ...project.toObject(), members: transformedMembers } })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in Get Single Projects!", success: false })
     }
 
 }
 async function handleProjectUpdate(req, res) {
-    const { project_name, members } = req.body;
+    const { project_name, members, is_star } = req.body;
     const { id } = req.params;
     console.log("handleProjectUpdate project_name::", project_name);
     console.log("handleProjectUpdate id::", id);
 
     try {
         let updateData = {}
-        if (!id || !project_name) {
+        if (!id && !project_name && !members && !is_star) {
             return res.status(404).json({ msg: "data not found!" })
         }
         if (members) {
@@ -93,6 +93,9 @@ async function handleProjectUpdate(req, res) {
         }
         if (project_name) {
             updateData.project_name = project_name
+        }
+        if (is_star!=null) {
+            updateData.is_star = is_star;
         }
         const record = await Project.findByIdAndUpdate(id, updateData)
         // const record = await Project.findByIdAndUpdate(id, {
