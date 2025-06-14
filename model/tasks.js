@@ -12,11 +12,14 @@ const taskSchema = mongoose.Schema(
       type: String,
       required: [true, "Enter Title of Task"],
     },
-    assign_to: {
-      // type: String,
+    assign_to:
+    {
+      type: String,
       // TODO: i think it only assign to signe user only
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "signup"
+      // type: mongoose.Schema.Types.ObjectId,
+      // ref: "signup"
+      // type: mongoose.Schema.Types.ObjectId,
+      // ref: "signup"
     },
     summary: {
       type: String,
@@ -26,7 +29,8 @@ const taskSchema = mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["Low", "Normal", "High"]
+      enum: ["Low", "Normal", "High"],
+      default: "Normal"
     },
     image: {
       type: String,

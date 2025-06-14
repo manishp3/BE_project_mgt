@@ -38,8 +38,8 @@ async function handleCreateTask(req, res) {
 
 
     const data = await task_tbl.create(taskData)
-    const task_cout = await task_tbl.countDocuments({ pro_ref: pro_id })
-    const data1 = await project_tbl.findByIdAndUpdate(pro_id, { total_task: task_cout })
+    const task_count = await task_tbl.countDocuments({ pro_ref: pro_id })
+    const data1 = await project_tbl.findByIdAndUpdate(pro_id, { total_task: task_count })
     console.log("pro_id::6", data);
 
 

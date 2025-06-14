@@ -31,7 +31,9 @@ app.use(session({
   cookie: { secure: false }  //set true only in production with HTTPS
 
 }))
-app.use("/public", express.static("public"));
+// app.use("/public", express.static("public"));
+app.use("/uploads", express.static("public/uploads"));
+
 
 connectToMongo(process.env.MONGO_URL);
 
