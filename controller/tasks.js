@@ -6,7 +6,8 @@ async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
   const { label, summary, status, assign_to, priority, due_date } = req.body;
   const imageData = req.files?.image;
-  console.log("pro_id::", pro_id);
+  console.log("pro_id::", req.body);
+  console.log("pro_id::1", imageData);
 
   try {
     console.log("title,description,image::", label, summary, status);
@@ -33,8 +34,8 @@ async function handleCreateTask(req, res) {
       //   data: imageData.data,
       //   contentType: imageData.mimetype,
       // }
-      console.log("pro_id::5", taskData);
     }
+    console.log("pro_id::5", taskData);
 
 
     const data = await task_tbl.create(taskData)
@@ -119,7 +120,7 @@ async function handleGetAllTasks(req, res) {
     const _id = req.params.pro_id
     console.log("_id::", _id);
 
-    const allTask = await task_tbl.find({ pro_ref: _id }).sort({ createdAt: -1 })
+    const allTask = await task_tbl.find({ pro_ref: _id }).sort({ createdAt: -1 }).populate("assign_to", "email")
     console.log("allTask::", allTask);
     if (!allTask) {
       return res.json({ msg: "No task Found!", success: false })

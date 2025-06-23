@@ -1,5 +1,5 @@
 const express = require("express");
-const { handleSignup, handleSignin,handleLogout, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword } = require("../controller/auth");
+const { handleSignup, handleSignin,handleLogout, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword,handleUpdateUser } = require("../controller/auth");
 
 const router = express.Router();
 router.post("/signup", (req, res) => {
@@ -13,6 +13,9 @@ router.get("/users", async (req, res) => {
 });
 router.post("/signin", async (req, res) => {
   handleSignin(req, res);
+});
+router.patch("/update-user/:id", async (req, res) => {
+  handleUpdateUser(req, res);
 });
 
 // new user singed verify otp

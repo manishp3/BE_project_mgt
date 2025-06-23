@@ -5,6 +5,8 @@ const generateJwtToken = (user) => {
         _id: user._id,
         email: user.email,
         password: user.password,
+        username:user.username,
+        image:user?.image
     }
     const token = jwt.sign(payload, process.env.SECRET)
     // console.log("log of genrated token::", token);

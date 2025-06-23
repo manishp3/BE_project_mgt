@@ -13,6 +13,9 @@ const userSchema = mongoose.Schema(
       required: [true, "Username is Required"],
       trim: true,
     },
+    image: {
+      type: String,
+    },
     password: {
       type: String,
       required: [true, "Password is Required"],
@@ -59,8 +62,8 @@ userSchema.static("matchPassword", async function (email, password) {
       // return res.status(401).json({ msg: "Wrong password", success: false })
     }
     const token = generateJwtToken(data)
-    console.log("log og token mstach::",token);
-    
+    console.log("log og token mstach::", token);
+
     return token;
 
   } catch (error) {

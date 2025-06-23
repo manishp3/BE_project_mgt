@@ -26,16 +26,21 @@ async function handleProjectCreate(req, res) {
 }
 
 async function handleGetAllProjects(req, res) {
+    const type = req.query.type
     const { _id } = req.user
-    console.log("handleGetAllProjects _id::", req.user);
+    console.log("handleGetAllProjects _id::", type);
 
     try {
-        const allProject = await Project.find({ pro_ref: _id }).sort({ createdAt: -1 })
+        let allProject = [];
+        if (type == "A") {
+            allProject = await Project.find({ pro_ref: _id }).sort({ createdAt: -1 })
+        } else if (type == 'S') {
+            allProject = await Project.find({ pro_ref: _id, is_star: 1 }).sort({ createdAt: -1 })
+        }
         return res.status(200).json({ msg: "Projects Get Succesfully!", success: true, projects: allProject })
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get all projects!", success: false })
     }
-
 }
 // members dd 
 async function handleGetProjectMembers(req, res) {
@@ -46,7 +51,7 @@ async function handleGetProjectMembers(req, res) {
 
         if (!mem) return res.status(404).json({ msg: "Project not found" });
 
-        return res.status(200).json({ members: mem.members });
+        return res.status(200).json({ members: mem.members,success:true });
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get Members", success: false })
     }
@@ -94,7 +99,7 @@ async function handleProjectUpdate(req, res) {
         if (project_name) {
             updateData.project_name = project_name
         }
-        if (is_star!=null) {
+        if (is_star != null) {
             updateData.is_star = is_star;
         }
         const record = await Project.findByIdAndUpdate(id, updateData)

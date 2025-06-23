@@ -5,14 +5,14 @@ const { createHmac, randomBytes } = require("crypto")
 const { handleOptSender, verifyJwtToken } = require("../service/auth");
 
 async function getAllLogedInUser(req, res) {
-  const users = await signUp.find({},"_id email")
-  console.log("log of loggedin users::",users);
-  const formatedData=users.map((user)=>({
-    _id:user._id,
-    label:user.email,
-    value:user._id
+  const users = await signUp.find({}, "_id email")
+  console.log("log of loggedin users::", users);
+  const formatedData = users.map((user) => ({
+    _id: user._id,
+    label: user.email,
+    value: user._id
   }))
-  
+
   if (!users) {
     return res.status(404).json({ msg: "No Users!", success: false })
   }
@@ -168,7 +168,7 @@ async function handleVerifyOtp(req, res) {
     console.log("payload6::");
 
     // sent token to set in localstorage
-    return res.status(200).json({ msg: "OTP Verified!", success: true, token: token })
+    return res.status(200).json({ msg: "OTP Verified!", success: true, token: token, user: payload })
 
   } catch (error) {
     return res
@@ -374,4 +374,35 @@ async function handleLogout(req, res) {
   return res.status(200).json({ success: true, message: 'Logged out successfully' });
 
 }
-module.exports = { handleLogout, handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword };
+async function handleUpdateUser(req, res) {
+  const { id } = req.params;
+  const { username, email } = req.body;
+  const imageData = req.files?.image;
+  console.log("handleUpdateUser::", id, username, email);
+  try {
+    const updatedData = {}
+    console.log("handleUpdateUser::1", id);
+    if (username) {
+      updatedData.username = username
+    }
+    console.log("handleUpdateUser::2", id);
+    if (email) {
+      updatedData.email = email;
+    }
+    console.log("handleUpdateUser::3", id);
+    if (imageData) {
+      const imageName = `${Date.now()}_${imageData.name}`
+      const imagePath = `./public/users/${imageName}`
+      await imageData.mv(imagePath)
+      updatedData.image = imageName
+    }
+    console.log("handleUpdateUser::4", updatedData);
+    const data = await signUp.findByIdAndUpdate(id, updatedData, { new: true })
+    console.log("handleUpdateUser::5", id);
+    return res.status(200).json({ msg: "User Updated!", success: true, update_user: data })
+  }
+  catch (error) {
+    return res.status(500).json({ msg: "Something went wrong in Update user!", success: false, error: error })
+  }
+}
+module.exports = { handleLogout, handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword, handleUpdateUser };

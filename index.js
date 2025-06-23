@@ -33,6 +33,7 @@ app.use(session({
 }))
 // app.use("/public", express.static("public"));
 app.use("/uploads", express.static("public/uploads"));
+app.use("/users", express.static("public/users"));
 
 
 connectToMongo(process.env.MONGO_URL);
