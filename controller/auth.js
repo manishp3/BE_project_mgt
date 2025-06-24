@@ -2,7 +2,7 @@ const signUp = require("../model");
 const { ObjectId } = require("mongoose")
 const code_tbl = require("../model/code");
 const { createHmac, randomBytes } = require("crypto")
-const { handleOptSender, verifyJwtToken } = require("../service/auth");
+const { handleOptSender, verifyJwtToken, generateJwtToken } = require("../service/auth");
 
 async function getAllLogedInUser(req, res) {
   const users = await signUp.find({}, "_id email")
@@ -343,7 +343,7 @@ async function handleverifyforgototp(req, res) {
       });
   }
 }
-async function handlechangepassword(req, res) {
+async function handleForgotpassword(req, res) {
   const { password, user_id } = req.body;
   try {
     if (!user_id || !password) {
@@ -405,4 +405,31 @@ async function handleUpdateUser(req, res) {
     return res.status(500).json({ msg: "Something went wrong in Update user!", success: false, error: error })
   }
 }
-module.exports = { handleLogout, handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword, handleUpdateUser };
+async function handlechangepassword(req, res) {
+  const { oldPassword, newPassword,id } = req.body;
+  // const {  } = req.params;
+  console.log("oldPassword, newPassword::", oldPassword, newPassword);
+
+  try {
+    const data = await signUp.findOne({ _id: id })
+    console.log("oldPassword id ::", oldPassword, id);
+    console.log("oldPassword id ::data", data);
+    if (!data) {
+      return res.status(401).json({ msg: "no Account found", success: false })
+    }
+    const retuedData = await signUp.matchPassword(data.email, oldPassword)
+    const salt = randomBytes(16).toString();
+    const hashedpwd = createHmac("sha256", salt).update(newPassword).digest("hex")
+    const updatedData = {
+      password: hashedpwd,
+      salt: salt
+    }
+    const token = generateJwtToken(data)
+    const user = await signUp.findByIdAndUpdate({ _id: id }, updatedData)
+    console.log("changes password::", user);
+    return res.status(200).json({ msg: "User Password Updated!", success: true, update_user: data, token: token })
+  } catch (err) {
+    return res.status(500).json({ msg: "Something went wrong in Change Password!", success: false, error: err })
+  }
+}
+module.exports = { handleLogout, handleSignup, handleSignin, handlechangepassword, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handleForgotpassword, handleUpdateUser };
