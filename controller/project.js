@@ -1,3 +1,4 @@
+const signUp = require("../model");
 const Project = require("../model/project");
 const task_tbl = require("../model/tasks");
 
@@ -32,12 +33,73 @@ async function handleGetAllProjects(req, res) {
 
     try {
         let allProject = [];
-        if (type == "A") {
-            allProject = await Project.find({ pro_ref: _id }).sort({ createdAt: -1 })
-        } else if (type == 'S') {
-            allProject = await Project.find({ pro_ref: _id, is_star: 1 }).sort({ createdAt: -1 })
+        // let allProject = [];
+
+        if (type === "A") {
+            allProject = await Project.find({ pro_ref: _id })
+                .populate("members", "_id email")
+                .sort({ createdAt: -1 });
+
+            const userData = await signUp.find({});
+
+            const transformedProjects = allProject.map(project => {
+                const transformedMembers = project.members.map(member => {
+                    const matchedUser = userData.find(
+                        user => user._id.toString() === member._id.toString()
+                    );
+
+                    return {
+                        value: member._id,
+                        label: member.email,
+                        icon: matchedUser?.image || null,
+                    };
+                });
+
+                return {
+                    ...project.toObject(),
+                    members: transformedMembers,
+                };
+            });
+
+            return res.status(200).json({
+                msg: "Projects Get Successfully!",
+                success: true,
+                projects: transformedProjects,
+            });
+
+        } else if (type === "S") {
+            allProject = await Project.find({ pro_ref: _id, is_star: 1 }).sort({ createdAt: -1 });
+            const userData = await signUp.find({});
+
+            const transformedProjects = allProject.map(project => {
+                const transformedMembers = project.members.map(member => {
+                    const matchedUser = userData.find(
+                        user => user._id.toString() === member._id.toString()
+                    );
+
+                    return {
+                        value: member._id,
+                        label: member.email,
+                        icon: matchedUser?.image || null,
+                    };
+                });
+
+                console.log("to object lofg::",project);
+                // console.log("to object lofg::1",...project.toObject());
+                
+                return {
+                    ...project.toObject(),
+                    members: transformedMembers,
+                };
+            });
+
+            return res.status(200).json({
+                msg: "Projects Get Successfully!",
+                success: true,
+                projects: transformedProjects,
+            });
         }
-        return res.status(200).json({ msg: "Projects Get Succesfully!", success: true, projects: allProject })
+
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get all projects!", success: false })
     }
@@ -51,7 +113,7 @@ async function handleGetProjectMembers(req, res) {
 
         if (!mem) return res.status(404).json({ msg: "Project not found" });
 
-        return res.status(200).json({ members: mem.members,success:true });
+        return res.status(200).json({ members: mem.members, success: true });
     } catch (err) {
         return res.status(500).json({ msg: "Something went wrong in get Members", success: false })
     }
@@ -60,17 +122,31 @@ async function handleGetProjectMembers(req, res) {
 
 async function handleGetProject(req, res) {
     const { id } = req.params;
-    console.log("handleGetProject id ::", id);
+    // console.log("handleGetProject id ::", id);
+
 
     try {
         const project = await Project.findOne({ _id: id }).populate("members", "_id email")
+        // const image = await signUp.find({ _id: project.pro_ref }).select("image -_id")
+        const userData = await signUp.find({})
+        // const project = await Project.findOne({ _id: id })
+        console.log("handleGetProject id ::", userData);
 
-        const transformedMembers = project.members.map(member => ({
-            value: member._id,
-            label: member.email,
-        }));
+        console.log("handleGetProject id ::1", project.members);
+        const transformedMembers = project.members.map(member => {
+            console.log("inseide log of me ::", userData);
+            console.log("inseide log of me ::1", member);
 
-        console.log("project members ::", project);
+            const matchedUser = userData.find(data => data._id.toString() === member._id.toString())
+            matchedUser
+            return {
+                value: member._id,
+                label: member.email,
+                icon: matchedUser?.image,
+            }
+        });
+
+        console.log("transformedMembers::", transformedMembers);
 
         if (!project) {
             return res.status(404).json({ msg: "project not found!", success: false })
