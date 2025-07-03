@@ -84,9 +84,9 @@ async function handleGetAllProjects(req, res) {
                     };
                 });
 
-                console.log("to object lofg::",project);
+                console.log("to object lofg::", project);
                 // console.log("to object lofg::1",...project.toObject());
-                
+
                 return {
                     ...project.toObject(),
                     members: transformedMembers,

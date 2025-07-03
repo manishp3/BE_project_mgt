@@ -5,12 +5,14 @@ const { createHmac, randomBytes } = require("crypto")
 const { handleOptSender, verifyJwtToken, generateJwtToken } = require("../service/auth");
 
 async function getAllLogedInUser(req, res) {
-  const users = await signUp.find({}, "_id email")
+  const users = await signUp.find({}, "_id email image")
   console.log("log of loggedin users::", users);
   const formatedData = users.map((user) => ({
     _id: user._id,
     label: user.email,
-    value: user._id
+    value: user._id,
+    icon: user.image,
+
   }))
 
   if (!users) {
@@ -167,7 +169,7 @@ async function handleVerifyOtp(req, res) {
     await code_tbl.deleteOne({ email: userId })
     console.log("payload6::");
 
-    // sent token to set in localstorage
+    // sent token to set in localstorage  
     return res.status(200).json({ msg: "OTP Verified!", success: true, token: token, user: payload })
 
   } catch (error) {
@@ -406,7 +408,7 @@ async function handleUpdateUser(req, res) {
   }
 }
 async function handlechangepassword(req, res) {
-  const { oldPassword, newPassword,id } = req.body;
+  const { oldPassword, newPassword, id } = req.body;
   // const {  } = req.params;
   console.log("oldPassword, newPassword::", oldPassword, newPassword);
 

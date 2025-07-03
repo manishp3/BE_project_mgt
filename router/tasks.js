@@ -1,5 +1,5 @@
 const express = require("express");
-const { handleCreateTask,handleGetAllTasks, handleGetTask, handleUpdateTask, handleDeleteTask } = require("../controller/tasks");
+const { handleCreateTask,handleGetAllTasks,handleGetTask, handleUpdateTask, handleDeleteTask,handleUserProjectsAndTaskDetails } = require("../controller/tasks");
 const router = express.Router()
 
 router.post("/createtask/:pro_id", (req, res) => {
@@ -20,4 +20,11 @@ router.patch("/task_u/:task_id", (req, res) => {
 router.delete("/task_d/:task_id", (req, res) => {
     handleDeleteTask(req, res)
 })
+router.get("/user_project_detail", (req, res) => {
+    handleUserProjectsAndTaskDetails(req, res)
+})
+
+// router.get("/find_status",(req,res)=>{
+//     handleFindTotalTaskAndStatus(req,res)
+// })
 module.exports = router;
