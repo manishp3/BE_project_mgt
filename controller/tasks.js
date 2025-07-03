@@ -2,26 +2,33 @@ const mongoose = require("mongoose");
 const task_tbl = require("../model/tasks");
 const project_tbl = require("../model/project");
 const user_tbl = require("../model/index");
+const { handleOptSender } = require("../service/auth");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
   const { label, summary, status, assign_to, priority, due_date } = req.body;
   const imageData = req.files?.image;
   console.log("pro_id::", req.body);
-  console.log("pro_id::1", imageData);
+  console.log("assign_to :: from me", assign_to);
 
   try {
+    if (label == "" || label == null) {
+      return res.status(201).json({ msg: "Label is required", success: false })
+    }
     console.log("title,description,image::", label, summary, status);
     let taskData = {
       pro_ref: pro_id,
       label: label,
       summary: summary,
-      status: status,
-      priority: priority,
+      status: status || "To Do",
+      priority: priority || "Normal",
       due_date: due_date,
       assign_to: assign_to,
-      time_spent: "",
+      time_spent: 0,
 
     }
+    // setTimeout(() => {
+    //   sendMailNotificationtoMembersofTask("project_name", label, assign_to)
+    // }, 0);
     console.log("pro_id::1", pro_id);
     if (imageData) {
       console.log("pro_id::2", pro_id);
@@ -218,11 +225,20 @@ async function handleUpdateTask(req, res) {
     if (status) {
       updatedData.status = status
     }
-    if (time_spent) {
-
-      updatedData.time_spent = time_spent
-    }
     console.log("im called 4");
+    if (time_spent) {
+      console.log("im called 5");
+      const findTask = await task_tbl.findById(_id)
+      console.log("im called 5 task", findTask);
+      if (findTask.time_spent >= 0) {
+        updatedData.time_spent = time_spent + findTask.time_spent
+      }
+      else {
+        updatedData.time_spent = time_spent
+      }
+    }
+    console.log("im called 6");
+    // console.log("im called 4");
     if (imageData) {
       const imageName = `${Date.now()}_${imageData.name}`
       const imagePath = `./public/uploads/${imageName}`
@@ -319,7 +335,59 @@ async function handleUserProjectsAndTaskDetails(req, res) {
   });
   console.log("loggedUserId::1 totalProjects", allTask);
   // console.log("loggedUserId::1 totalTasksCount", totalTasksCount);
-  return res.json({ tasks: totalTaskCount,success:true, done_task: { task: doneCount, hours: doneHours }, inprogress_task: { task: inProgressCount, hours: inProgressHours }, todo_task: { task: todoCount, hours: todoHours }, total_projects: totalProjects.length, total_hours: totalHours })
+  return res.json({ tasks: totalTaskCount, success: true, done_task: { task: doneCount, hours: doneHours }, inprogress_task: { task: inProgressCount, hours: inProgressHours }, todo_task: { task: todoCount, hours: todoHours }, total_projects: totalProjects.length, total_hours: totalHours })
 }
 
+
+async function sendMailNotificationtoMembersofTask(project_name, task_name, members) {
+  await handleOptSender.sendMail({
+    from: process.env.NODE_EMAIL_ADDRESS,
+    to: members.map((mem) => mem.label), // flat array of email strings
+    subject: `You’ve got task from: ${project_name}`,
+    html: `<html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Project Assignment</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          padding: 20px;
+        }
+        .email-container {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          padding: 30px;
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h2 {
+          color: #333333;
+        }
+        p {
+          color: #555555;
+          line-height: 1.6;
+        }
+        .footer {
+          margin-top: 30px;
+          font-size: 12px;
+          color: #999999;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        // <h2>You've been added to a new project!</h2>
+        <p>Hello,</p>
+        <p>${task_name}</p>
+        <div class="footer">
+          &copy; 2025 Project Management System. All rights reserved.
+        </div>
+      </div>
+    </body>
+  </html>`
+  });
+}
 module.exports = { handleCreateTask, handleDeleteTask, handleUpdateTask, handleGetTask, handleGetAllTasks, handleUserProjectsAndTaskDetails };

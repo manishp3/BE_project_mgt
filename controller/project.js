@@ -1,6 +1,8 @@
 const signUp = require("../model");
+const project_tbl = require("../model/project");
 const Project = require("../model/project");
 const task_tbl = require("../model/tasks");
+const { handleOptSender } = require("../service/auth");
 
 async function handleProjectCreate(req, res) {
     console.log("project_name, members::", req.body);
@@ -17,6 +19,12 @@ async function handleProjectCreate(req, res) {
             pro_ref: req.user?._id,
             members: members || []
         })
+
+        setTimeout(() => {
+
+            sendMailNotificationtoMembers(project_name, members)
+        }, 0);
+
         console.log("log of created PRioject::", project);
 
         return res.status(201).json({ msg: "Project Created!", success: true, data: project })
@@ -162,15 +170,83 @@ async function handleProjectUpdate(req, res) {
     const { project_name, members, is_star } = req.body;
     const { id } = req.params;
     console.log("handleProjectUpdate project_name::", project_name);
+    console.log("handleProjectUpdate project_name updated members::", members);
     console.log("handleProjectUpdate id::", id);
 
     try {
+        if (!project_name) {
+            return res.status(404).json({ msg: "No Project name Found!", success: true })
+        }
         let updateData = {}
         if (!id && !project_name && !members && !is_star) {
             return res.status(404).json({ msg: "data not found!" })
         }
         if (members) {
             updateData.members = members
+            let latestProjectName = ""
+            if (project_name) {
+                latestProjectName = project_name
+            }
+            else {
+                const project_db = await project_tbl.findById(id).select("project_name")
+                latestProjectName = project_db?.project_name
+            }
+            console.log("log of project name from db::", latestProjectName);
+
+            setTimeout(() => {
+                sendMailNotificationtoMembers(latestProjectName, members)
+            }, 0);
+            //             await handleOptSender.sendMail({
+            //                 from: process.env.NODE_EMAIL_ADDRESS,
+            //                 to: members.map((mem) => mem.label), // flat array of email strings
+            //                 subject: `You’ve been added to project: ${project_name}`,
+            //                 html: `<html>
+            //     <head>
+            //       <meta charset="UTF-8" />
+            //       <title>Project Assignment</title>
+            //       <style>
+            //         body {
+            //           font-family: Arial, sans-serif;
+            //           background-color: #f4f4f4;
+            //           padding: 20px;
+            //         }
+            //         .email-container {
+            //           max-width: 600px;
+            //           margin: auto;
+            //           background-color: #ffffff;
+            //           padding: 30px;
+            //           border-radius: 8px;
+            //           box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            //         }
+            //         h2 {
+            //           color: #333333;
+            //         }
+            //         p {
+            //           color: #555555;
+            //           line-height: 1.6;
+            //         }
+            //         .footer {
+            //           margin-top: 30px;
+            //           font-size: 12px;
+            //           color: #999999;
+            //           text-align: center;
+            //         }
+            //       </style>
+            //     </head>
+            //     <body>
+            //       <div class="email-container">
+            //         <h2>You've been added to a new project!</h2>
+            //         <p>Hello,</p>
+            //         <p>You have been added as a <strong>member</strong> of the project <strong>"${project_name}"</strong></p>
+            //         <p>You can now collaborate with your team, manage tasks, and track progress.</p>
+            //         <p>If you have any questions, please contact your project admin.</p>
+            //         <div class="footer">
+            //           &copy; 2025 Project Management System. All rights reserved.
+            //         </div>
+            //       </div>
+            //     </body>
+            //   </html>`
+            //             });
         }
         if (project_name) {
             updateData.project_name = project_name
@@ -206,4 +282,57 @@ async function handleProjectDelete(req, res) {
 
 }
 
+async function sendMailNotificationtoMembers(project_name, members) {
+    await handleOptSender.sendMail({
+        from: process.env.NODE_EMAIL_ADDRESS,
+        to: members.map((mem) => mem.label), // flat array of email strings
+        subject: `You’ve been added to project: ${project_name}`,
+        html: `<html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Project Assignment</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          padding: 20px;
+        }
+        .email-container {
+          max-width: 600px;
+          margin: auto;
+          background-color: #ffffff;
+          padding: 30px;
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h2 {
+          color: #333333;
+        }
+        p {
+          color: #555555;
+          line-height: 1.6;
+        }
+        .footer {
+          margin-top: 30px;
+          font-size: 12px;
+          color: #999999;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <h2>You've been added to a new project!</h2>
+        <p>Hello,</p>
+        <p>You have been added as a <strong>member</strong> of the project <strong>"${project_name}"</strong></p>
+        <p>You can now collaborate with your team, manage tasks, and track progress.</p>
+        <p>If you have any questions, please contact your project admin.</p>
+        <div class="footer">
+          &copy; 2025 Project Management System. All rights reserved.
+        </div>
+      </div>
+    </body>
+  </html>`
+    });
+}
 module.exports = { handleProjectCreate, handleProjectUpdate, handleProjectDelete, handleGetAllProjects, handleGetProject, handleGetProjectMembers };

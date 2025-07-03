@@ -34,6 +34,7 @@ const taskSchema = mongoose.Schema(
     time_spent: {
       // type: String,
       type: Number,
+      default:0,
     },
     priority: {
       type: String,

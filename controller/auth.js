@@ -163,7 +163,7 @@ async function handleVerifyOtp(req, res) {
     }
     console.log("payload4::");
     if (record.code !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP!" })
+      return res.status(400).json({ msg: "Invalid OTP!" ,success:false})
     }
     console.log("payload5::");
     await code_tbl.deleteOne({ email: userId })
