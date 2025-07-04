@@ -177,12 +177,12 @@ async function handleProjectUpdate(req, res) {
         if (!project_name) {
             return res.status(404).json({ msg: "No Project name Found!", success: true })
         }
-        let updateData = {}
         if (!id && !project_name && !members && !is_star) {
             return res.status(404).json({ msg: "data not found!" })
         }
+        let updateData = {}
         if (members) {
-            updateData.members = members
+            updateData.members = members.map(mem=>mem.value)
             let latestProjectName = ""
             if (project_name) {
                 latestProjectName = project_name
@@ -193,9 +193,10 @@ async function handleProjectUpdate(req, res) {
             }
             console.log("log of project name from db::", latestProjectName);
 
-            setTimeout(() => {
-                sendMailNotificationtoMembers(latestProjectName, members)
-            }, 0);
+
+            // setTimeout(() => {
+            //     sendMailNotificationtoMembers(latestProjectName, members)
+            // }, 0);
             //             await handleOptSender.sendMail({
             //                 from: process.env.NODE_EMAIL_ADDRESS,
             //                 to: members.map((mem) => mem.label), // flat array of email strings
@@ -248,17 +249,24 @@ async function handleProjectUpdate(req, res) {
             //   </html>`
             //             });
         }
+        console.log("log of project name from db::1");
         if (project_name) {
+            console.log("log of project name from db::2");
             updateData.project_name = project_name
         }
+        console.log("log of project name from db::3");
         if (is_star != null) {
+            console.log("log of project name from db::4");
             updateData.is_star = is_star;
         }
+        console.log("log of project name from db::5", updateData);
+
         const record = await Project.findByIdAndUpdate(id, updateData)
+        console.log("log of project name from db::6", record);
+
         // const record = await Project.findByIdAndUpdate(id, {
         //     project_name: project_name
         // })
-        console.log("handleProjectUpdate record::", record);
         return res.status(201).json({ msg: "Project Updated!", success: true, data: record })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in project Update!", success: false })

@@ -21,10 +21,12 @@ const taskSchema = mongoose.Schema(
     //   // type: mongoose.Schema.Types.ObjectId,
     //   // ref: "signup"
     // },
-    assign_to: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "signup"
-    },
+    assign_to: 
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "signup"
+      }
+    ,
     summary: {
       type: String,
     },
@@ -34,7 +36,7 @@ const taskSchema = mongoose.Schema(
     time_spent: {
       // type: String,
       type: Number,
-      default:0,
+      default: 0,
     },
     priority: {
       type: String,

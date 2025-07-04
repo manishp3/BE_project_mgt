@@ -5,7 +5,8 @@ const user_tbl = require("../model/index");
 const { handleOptSender } = require("../service/auth");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
-  const { label, summary, status, assign_to, priority, due_date } = req.body;
+  const { label, summary, status, priority, due_date } = req.body;
+  const assign_to = JSON.parse(req.body.assign_to);
   const imageData = req.files?.image;
   console.log("pro_id::", req.body);
   console.log("assign_to :: from me", assign_to);
@@ -22,13 +23,11 @@ async function handleCreateTask(req, res) {
       status: status || "To Do",
       priority: priority || "Normal",
       due_date: due_date,
-      assign_to: assign_to,
+      assign_to: assign_to.value || [],
       time_spent: 0,
 
     }
-    // setTimeout(() => {
-    //   sendMailNotificationtoMembersofTask("project_name", label, assign_to)
-    // }, 0);
+
     console.log("pro_id::1", pro_id);
     if (imageData) {
       console.log("pro_id::2", pro_id);
@@ -47,9 +46,18 @@ async function handleCreateTask(req, res) {
 
 
     const data = await task_tbl.create(taskData)
+    console.log("pro_id::5.1", data);
     const task_count = await task_tbl.countDocuments({ pro_ref: pro_id })
+    console.log("pro_id::5.2", data);
+    // to find name of project 
+    const project_name = await project_tbl.findById(pro_id)
+    console.log("pro_id::5.3", project_name);
+    setTimeout(() => {
+      sendMailNotificationtoMembersofTask(project_name?.project_name, label, assign_to?.label)
+    }, 0);
     const data1 = await project_tbl.findByIdAndUpdate(pro_id, { total_task: task_count })
-    console.log("pro_id::6", data);
+    // console.log("pro_id::5.2", data);
+    console.log("pro_id::6", data1);
 
 
     return res.status(200).json({ msg: "task Created!", success: true, task: data })
@@ -339,10 +347,10 @@ async function handleUserProjectsAndTaskDetails(req, res) {
 }
 
 
-async function sendMailNotificationtoMembersofTask(project_name, task_name, members) {
+async function sendMailNotificationtoMembersofTask(project_name, task_name, email) {
   await handleOptSender.sendMail({
     from: process.env.NODE_EMAIL_ADDRESS,
-    to: members.map((mem) => mem.label), // flat array of email strings
+    to: email, // flat array of email strings
     subject: `You’ve got task from: ${project_name}`,
     html: `<html>
     <head>
@@ -379,8 +387,7 @@ async function sendMailNotificationtoMembersofTask(project_name, task_name, memb
     </head>
     <body>
       <div class="email-container">
-        // <h2>You've been added to a new project!</h2>
-        <p>Hello,</p>
+        <p>You've been Assigned new task!</p>
         <p>${task_name}</p>
         <div class="footer">
           &copy; 2025 Project Management System. All rights reserved.
