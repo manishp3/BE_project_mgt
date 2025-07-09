@@ -58,8 +58,8 @@ userSchema.static("matchPassword", async function (email, password) {
       .update(password)
       .digest("hex");
     if (hashedpassword != hashedpwd) {
-      throw new Error("Wrong Password!")
-      // return res.status(401).json({ msg: "Wrong password", success: false })
+      // throw new Error("Wrong Password!")
+      return res.status(201).json({ msg: "Wrong password", success: false })
     }
     const token = generateJwtToken(data)
     console.log("log og token mstach::", token);

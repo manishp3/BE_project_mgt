@@ -3,6 +3,7 @@ const task_tbl = require("../model/tasks");
 const project_tbl = require("../model/project");
 const user_tbl = require("../model/index");
 const { handleOptSender } = require("../service/auth");
+const signUp = require("../model/index");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
   const { label, summary, status, priority, due_date } = req.body;
@@ -23,7 +24,7 @@ async function handleCreateTask(req, res) {
       status: status || "To Do",
       priority: priority || "Normal",
       due_date: due_date,
-      assign_to: assign_to.value || [],
+      assign_to: assign_to?.value || [],
       time_spent: 0,
 
     }
@@ -63,6 +64,65 @@ async function handleCreateTask(req, res) {
     return res.status(200).json({ msg: "task Created!", success: true, task: data })
   } catch (error) {
     return res.status(500).json({ msg: "Something went wrong in createTask!", success: false })
+  }
+}
+async function handleUpdateTask(req, res) {
+  const _id = req.params.task_id
+  const { label, summary, status, priority, due_date, time_spent } = req.body;
+  const imageData = req.files?.image;
+  const assign_to = req.body.assign_to && JSON.parse(req?.body?.assign_to);
+  console.log("handleUpdateTask _id::", _id);
+  console.log("handleUpdateTask imageData::", time_spent);
+  let updatedData = {}
+  try {
+    console.log("im called 1");
+
+    if (label) {
+      updatedData.label = label
+    }
+    if (priority) {
+      updatedData.priority = priority
+    }
+    if (due_date) {
+      updatedData.due_date = due_date
+    }
+    if (assign_to) {
+      updatedData.assign_to = assign_to.value || []
+    }
+    console.log("im called 2");
+    if (summary) {
+      updatedData.summary = summary
+    }
+    console.log("im called 3");
+    if (status) {
+      updatedData.status = status
+    }
+    console.log("im called 4");
+    if (time_spent) {
+      console.log("im called 5");
+      const findTask = await task_tbl.findById(_id)
+      console.log("im called 5 task", findTask);
+      if (findTask.time_spent >= 0) {
+        updatedData.time_spent = time_spent + findTask.time_spent
+      }
+      else {
+        updatedData.time_spent = time_spent
+      }
+    }
+    console.log("im called 6");
+    // console.log("im called 4");
+    if (imageData) {
+      const imageName = `${Date.now()}_${imageData.name}`
+      const imagePath = `./public/uploads/${imageName}`
+      await imageData.mv(imagePath)
+      updatedData.image = imageName
+    }
+    console.log("im called 5");
+    const updateTask = await task_tbl.findByIdAndUpdate(_id, updatedData, { new: true })
+    console.log("im called 6");
+    return res.status(200).json({ msg: "task Updated!", success: true, Updated_Task: updateTask })
+  } catch (err) {
+    return res.status(500).json({ msg: "Something went wrong in Update Task!", success: false, error: err })
   }
 }
 // async function handleCreateTask(req, res) {
@@ -203,64 +263,7 @@ async function handleGetTask(req, res) {
     return res.status(500).json({ msg: "Something went wrong in Get task!", success: false })
   }
 }
-async function handleUpdateTask(req, res) {
-  const _id = req.params.task_id
-  const { label, summary, status, assign_to, priority, due_date, time_spent } = req.body;
-  const imageData = req.files?.image;
-  console.log("handleUpdateTask _id::", _id);
-  console.log("handleUpdateTask imageData::", time_spent);
-  let updatedData = {}
-  try {
-    console.log("im called 1");
 
-    if (label) {
-      updatedData.label = label
-    }
-    if (priority) {
-      updatedData.priority = priority
-    }
-    if (due_date) {
-      updatedData.due_date = due_date
-    }
-    if (assign_to) {
-      updatedData.assign_to = assign_to
-    }
-    console.log("im called 2");
-    if (summary) {
-      updatedData.summary = summary
-    }
-    console.log("im called 3");
-    if (status) {
-      updatedData.status = status
-    }
-    console.log("im called 4");
-    if (time_spent) {
-      console.log("im called 5");
-      const findTask = await task_tbl.findById(_id)
-      console.log("im called 5 task", findTask);
-      if (findTask.time_spent >= 0) {
-        updatedData.time_spent = time_spent + findTask.time_spent
-      }
-      else {
-        updatedData.time_spent = time_spent
-      }
-    }
-    console.log("im called 6");
-    // console.log("im called 4");
-    if (imageData) {
-      const imageName = `${Date.now()}_${imageData.name}`
-      const imagePath = `./public/uploads/${imageName}`
-      await imageData.mv(imagePath)
-      updatedData.image = imageName
-    }
-    console.log("im called 5");
-    const updateTask = await task_tbl.findByIdAndUpdate(_id, updatedData, { new: true })
-    console.log("im called 6");
-    return res.status(200).json({ msg: "task Updated!", success: true, Updated_Task: updateTask })
-  } catch (err) {
-    return res.status(500).json({ msg: "Something went wrong in Update Task!", success: false, error: err })
-  }
-}
 async function handleDeleteTask(req, res) {
   const taskId = req.params.task_id;
   console.log("taskId del::", taskId);
@@ -283,11 +286,74 @@ async function handleDeleteTask(req, res) {
   }
 }
 
-function extractHours(timeStr) {
-  const parsed = parseInt(timeStr); // "8h" → 8, "" → NaN
-  return isNaN(parsed) ? 0 : parsed;
-}
+// const getProjectMemberDetails = async (req, res) => {
+//   // get all project and its member ->by project id get all task 
+//   // find project by members_id get user and using project members id get all task of it and its hour
+//   const ProjectMembers = await project_tbl.find().select("members")
+//   console.log("getProjectMemberDetails:: projects", ProjectMembers);
+//   const allMembers = await signUp.find()
+//   console.log("getProjectMemberDetails:: allMembers", allMembers);
 
+//   //   const taskWiseData=ProjectMembers.find((member)=>{
+//   // allMembers.find()
+//   //   })
+//   const users = ProjectMembers.map((member) => {
+//     console.log("ProjectMembers membres::", member);
+//     let totalTaskHour = 0;
+//     const findUsers = member.map(async (mem) => {
+//       if (mem == allMembers._id) {
+//         totalTaskHour += await task_tbl.find({ assign_to: allMembers._id }).select("time_spent")
+//       }
+//       return totalTaskHour;
+//     })
+//   })
+//   console.log(" log of users ::",users);
+
+
+//   return res.status(201).json({
+//     // allMembers,
+//     ProjectMembers
+//   })
+// }
+
+
+const getProjectMemberDetails = async (req, res) => {
+  try {
+    // Step 1: Get all project members
+    const allProjects = await project_tbl.find().select("members");
+    const memberIdsSet = new Set();
+
+    allProjects.forEach(project => {
+      project.members.forEach(memberId => memberIdsSet.add(memberId.toString()));
+    });
+
+    const uniqueMemberIds = [...memberIdsSet];
+
+    // Step 2: Fetch user details
+    const users = await signUp.find({ _id: { $in: uniqueMemberIds } }).select("username email image");
+
+    // Step 3: For each user, calculate total hours and tasks
+    const result = await Promise.all(users.map(async (user) => {
+      const tasks = await task_tbl.find({ assign_to: user._id }).select("time_spent");
+
+      const total_spending_hour = tasks.reduce((sum, task) => sum + (task.time_spent || 0), 0);
+      const total_tasks = tasks.length;
+
+      return {
+        name: user.username,
+        email: user.email,
+        image: user.image,
+        total_spending_hour,
+        total_tasks
+      };
+    }));
+
+    return res.status(200).json({ members: result,success:true });
+  } catch (error) {
+    console.error("Error in getProjectMemberDetails:", error);
+    return res.status(500).json({ success: false, message: "Internal server error",success:false });
+  }
+};
 
 async function handleUserProjectsAndTaskDetails(req, res) {
   const loggedUserId = req.user._id;
@@ -397,4 +463,11 @@ async function sendMailNotificationtoMembersofTask(project_name, task_name, emai
   </html>`
   });
 }
-module.exports = { handleCreateTask, handleDeleteTask, handleUpdateTask, handleGetTask, handleGetAllTasks, handleUserProjectsAndTaskDetails };
+
+
+function extractHours(timeStr) {
+  const parsed = parseInt(timeStr); // "8h" → 8, "" → NaN
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+module.exports = { handleCreateTask, handleDeleteTask, handleUpdateTask, handleGetTask, handleGetAllTasks, handleUserProjectsAndTaskDetails, getProjectMemberDetails };

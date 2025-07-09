@@ -21,11 +21,12 @@ const taskSchema = mongoose.Schema(
     //   // type: mongoose.Schema.Types.ObjectId,
     //   // ref: "signup"
     // },
-    assign_to: 
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "signup"
-      }
+    assign_to:
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "signup",
+      default: [],
+    }
     ,
     summary: {
       type: String,

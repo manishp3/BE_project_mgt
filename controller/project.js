@@ -172,8 +172,14 @@ async function handleProjectUpdate(req, res) {
     console.log("handleProjectUpdate project_name::", project_name);
     console.log("handleProjectUpdate project_name updated members::", members);
     console.log("handleProjectUpdate id::", id);
-
+    const mem = await Project.findById(id).populate("members", "email")
+    console.log("handleProjectUpdate members::", mem);
     try {
+        // to handle only star prject 
+        if (is_star != null) {
+            await Project.findByIdAndUpdate(id, { is_star: is_star })
+            return res.status(201).json({ msg: "Project add to Favourite!", success: true })
+        }
         if (!project_name) {
             return res.status(404).json({ msg: "No Project name Found!", success: true })
         }
@@ -182,7 +188,7 @@ async function handleProjectUpdate(req, res) {
         }
         let updateData = {}
         if (members) {
-            updateData.members = members.map(mem=>mem.value)
+            updateData.members = members.map(mem => mem.value)
             let latestProjectName = ""
             if (project_name) {
                 latestProjectName = project_name
@@ -254,11 +260,7 @@ async function handleProjectUpdate(req, res) {
             console.log("log of project name from db::2");
             updateData.project_name = project_name
         }
-        console.log("log of project name from db::3");
-        if (is_star != null) {
-            console.log("log of project name from db::4");
-            updateData.is_star = is_star;
-        }
+        
         console.log("log of project name from db::5", updateData);
 
         const record = await Project.findByIdAndUpdate(id, updateData)
