@@ -7,10 +7,10 @@ const signUp = require("../model/index");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
   const { label, summary, status, priority, due_date } = req.body;
-  const assign_to = JSON.parse(req.body.assign_to);
+  const assign_to = JSON.parse(req?.body?.assign_to);
   const imageData = req.files?.image;
   console.log("pro_id::", req.body);
-  console.log("assign_to :: from me", assign_to);
+  // console.log("assign_to :: from me", assign_to);
 
   try {
     if (label == "" || label == null) {
@@ -24,7 +24,7 @@ async function handleCreateTask(req, res) {
       status: status || "To Do",
       priority: priority || "Normal",
       due_date: due_date,
-      assign_to: assign_to?.value || [],
+      assign_to: assign_to?.value || null,
       time_spent: 0,
 
     }
@@ -53,7 +53,9 @@ async function handleCreateTask(req, res) {
     // to find name of project 
     const project_name = await project_tbl.findById(pro_id)
     console.log("pro_id::5.3", project_name);
-    setTimeout(() => {
+    assign_to && setTimeout(() => {
+      console.log("im called on mail send task");
+
       sendMailNotificationtoMembersofTask(project_name?.project_name, label, assign_to?.label)
     }, 0);
     const data1 = await project_tbl.findByIdAndUpdate(pro_id, { total_task: task_count })
@@ -72,7 +74,7 @@ async function handleUpdateTask(req, res) {
   const imageData = req.files?.image;
   const assign_to = req.body.assign_to && JSON.parse(req?.body?.assign_to);
   console.log("handleUpdateTask _id::", _id);
-  console.log("handleUpdateTask imageData::", time_spent);
+  console.log("handleUpdateTask label, summary, status, priority, due_date, time_spent::", label, summary, status, priority, due_date, time_spent);
   let updatedData = {}
   try {
     console.log("im called 1");
@@ -87,7 +89,7 @@ async function handleUpdateTask(req, res) {
       updatedData.due_date = due_date
     }
     if (assign_to) {
-      updatedData.assign_to = assign_to.value || []
+      updatedData.assign_to = assign_to.value || null
     }
     console.log("im called 2");
     if (summary) {
@@ -98,28 +100,42 @@ async function handleUpdateTask(req, res) {
       updatedData.status = status
     }
     console.log("im called 4");
+    const findTask = await task_tbl.findById(_id)
+    console.log("im called 6", findTask);
     if (time_spent) {
       console.log("im called 5");
-      const findTask = await task_tbl.findById(_id)
-      console.log("im called 5 task", findTask);
       if (findTask.time_spent >= 0) {
         updatedData.time_spent = time_spent + findTask.time_spent
+        console.log("im called 7");
       }
       else {
+        console.log("im called 7 or ");
         updatedData.time_spent = time_spent
       }
     }
-    console.log("im called 6");
+    console.log("im called 8 ");
+
     // console.log("im called 4");
     if (imageData) {
+      console.log("im called 9");
       const imageName = `${Date.now()}_${imageData.name}`
       const imagePath = `./public/uploads/${imageName}`
       await imageData.mv(imagePath)
       updatedData.image = imageName
     }
-    console.log("im called 5");
+    console.log("im called 10");
+
     const updateTask = await task_tbl.findByIdAndUpdate(_id, updatedData, { new: true })
-    console.log("im called 6");
+    console.log("im called 11");
+
+    const projectData = await project_tbl.find({ _id: findTask.pro_ref })
+    console.log("im called 12", projectData);
+
+    assign_to && setTimeout(() => {
+      console.log("im called on mail send task");
+
+      sendMailNotificationtoMembersofTask(projectData[0]?.project_name, findTask.label, assign_to?.label)
+    }, 0);
     return res.status(200).json({ msg: "task Updated!", success: true, Updated_Task: updateTask })
   } catch (err) {
     return res.status(500).json({ msg: "Something went wrong in Update Task!", success: false, error: err })
@@ -319,8 +335,9 @@ async function handleDeleteTask(req, res) {
 
 const getProjectMemberDetails = async (req, res) => {
   try {
+    const loggedUserId = req.user._id
     // Step 1: Get all project members
-    const allProjects = await project_tbl.find().select("members");
+    const allProjects = await project_tbl.find({ pro_ref: loggedUserId }).select("members");
     const memberIdsSet = new Set();
 
     allProjects.forEach(project => {
@@ -348,10 +365,10 @@ const getProjectMemberDetails = async (req, res) => {
       };
     }));
 
-    return res.status(200).json({ members: result,success:true });
+    return res.status(200).json({ members: result, success: true });
   } catch (error) {
     console.error("Error in getProjectMemberDetails:", error);
-    return res.status(500).json({ success: false, message: "Internal server error",success:false });
+    return res.status(500).json({ success: false, message: "Internal server error", success: false });
   }
 };
 

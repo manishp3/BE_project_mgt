@@ -16,6 +16,9 @@ const userSchema = mongoose.Schema(
     image: {
       type: String,
     },
+    role: {
+      type: String,
+    },
     password: {
       type: String,
       required: [true, "Password is Required"],

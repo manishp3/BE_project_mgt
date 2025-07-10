@@ -22,25 +22,44 @@ async function getAllLogedInUser(req, res) {
 }
 async function handleSignup(req, res) {
   try {
-    const { email, password, username } = req.body;
-    console.log("log of signup body::", req.body);
+    const { email, password, username ,role} = req.body;
+    const image = req.files?.image;
+    console.log("log of signup body by mdd::", image);
     const userExist = await signUp.findOne({ email: email })
     if (userExist) {
       return res.status(201).json({ msg: "Already User exist!" })
     }
-    const data = await signUp.create({
+    let taskData = {
       username: username,
       email: email,
       password: password,
-    });
-    console.log("data saved::", data);
+      role:role,
+    }
+    // if (imageData) {
+      console.log("task dta signup::1",taskData);
+      const imageName = `${Date.now()}_${image.name}`
+      console.log("task dta signup::2",imageName);
+      const imagePath = `./public/users/${imageName}`
+      console.log("task dta signup::3",imagePath);
+      await image.mv(imagePath)
+      console.log("task dta signup::4",imagePath);
+      taskData.image = imageName
+      console.log("task dta signup::5",taskData);
+
+    // const data = await signUp.create({
+    //   username: username,
+    //   email: email,
+    //   password: password,
+    //   image:image
+    // });
+    const data = await signUp.create(taskData);
 
 
     return res
       .status(200)
       .json({ msg: "SignUp success", success: true });
   } catch (error) {
-    return res.status(401).json({ msg: "Error in SignUp", success: false, err: error });
+    return res.status(500).json({ msg: "Error in SignUp", success: false, err: error });
   }
 }
 
@@ -163,7 +182,7 @@ async function handleVerifyOtp(req, res) {
     }
     console.log("payload4::");
     if (record.code !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP!" ,success:false})
+      return res.status(400).json({ msg: "Invalid OTP!", success: false })
     }
     console.log("payload5::");
     await code_tbl.deleteOne({ email: userId })

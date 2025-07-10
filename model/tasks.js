@@ -25,11 +25,12 @@ const taskSchema = mongoose.Schema(
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "signup",
-      default: [],
+      default: null,
     }
     ,
     summary: {
       type: String,
+      default:"",
     },
     due_date: {
       type: Date,

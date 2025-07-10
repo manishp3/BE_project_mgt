@@ -21,7 +21,7 @@ async function handleProjectCreate(req, res) {
         })
 
         setTimeout(() => {
-
+console.log("im called on mail send project");
             sendMailNotificationtoMembers(project_name, members)
         }, 0);
 
