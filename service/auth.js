@@ -1,12 +1,15 @@
 const jwt = require("jsonwebtoken")
 const nodemailer = require("nodemailer")
 const generateJwtToken = (user) => {
+    console.log("generateJwtToken role::",user);
+    
     const payload = {
         _id: user._id,
         email: user.email,
         password: user.password,
         username:user.username,
-        image:user?.image
+        image:user?.image,
+        role:user?.role
     }
     const token = jwt.sign(payload, process.env.SECRET)
     // console.log("log of genrated token::", token);

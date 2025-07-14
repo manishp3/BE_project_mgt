@@ -64,6 +64,8 @@ userSchema.static("matchPassword", async function (email, password) {
       // throw new Error("Wrong Password!")
       return res.status(201).json({ msg: "Wrong password", success: false })
     }
+    console.log('generateJwtToken role modal index',data);
+    
     const token = generateJwtToken(data)
     console.log("log og token mstach::", token);
 

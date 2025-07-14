@@ -347,7 +347,7 @@ const getProjectMemberDetails = async (req, res) => {
     const uniqueMemberIds = [...memberIdsSet];
 
     // Step 2: Fetch user details
-    const users = await signUp.find({ _id: { $in: uniqueMemberIds } }).select("username email image");
+    const users = await signUp.find({ _id: { $in: uniqueMemberIds } }).select("username email image role");
 
     // Step 3: For each user, calculate total hours and tasks
     const result = await Promise.all(users.map(async (user) => {
@@ -360,6 +360,7 @@ const getProjectMemberDetails = async (req, res) => {
         name: user.username,
         email: user.email,
         image: user.image,
+        role: user.role,
         total_spending_hour,
         total_tasks
       };
@@ -375,60 +376,168 @@ const getProjectMemberDetails = async (req, res) => {
 async function handleUserProjectsAndTaskDetails(req, res) {
   const loggedUserId = req.user._id;
   console.log("loggedUserId::", loggedUserId);
-  const totalTasks = await project_tbl
-    .find({ pro_ref: loggedUserId })
+  try {
+    const totalTasks = await project_tbl
+      .find({ pro_ref: loggedUserId })
 
 
-  const totalTaskCount = totalTasks.reduce((sum, project) => {
-    return sum + (project.total_task || 0);
-  }, 0);
+    const totalTaskCount = totalTasks.reduce((sum, project) => {
+      return sum + (project.total_task || 0);
+    }, 0);
 
-  console.log("loggedUserId:: totalTaskCount", totalTaskCount);
-  const totalProjects = await project_tbl.find({ pro_ref: loggedUserId })
-  console.log("loggedUserId:: totalProjects", totalProjects.length);
-  // let totalTasksCount = 0;
-  let totalHours = 0;
-  let todoHours = 0;
-  let inProgressHours = 0;
-  let doneHours = 0;
+    console.log("loggedUserId:: totalTaskCount", totalTaskCount);
+    const totalProjects = await project_tbl.find({ pro_ref: loggedUserId })
+    console.log("loggedUserId:: totalProjects", totalProjects.length);
+    // let totalTasksCount = 0;
+    let totalHours = 0;
+    let todoHours = 0;
+    let inProgressHours = 0;
+    let doneHours = 0;
 
-  let todoCount = 0;
-  let inProgressCount = 0;
-  let doneCount = 0;
+    let todoCount = 0;
+    let inProgressCount = 0;
+    let doneCount = 0;
 
-  const allTask = await Promise.all(totalProjects.map(async (Project) => {
-    const tasks = await task_tbl.find({ pro_ref: Project._id }).select("time_spent status")
-    return tasks
-  }))
+    const allTask = await Promise.all(totalProjects.map(async (Project) => {
+      const tasks = await task_tbl.find({ pro_ref: Project._id }).select("time_spent status")
+      return tasks
+    }))
 
-  const flatTasks = allTask.flat()
-  console.log("loggedUserId::1 flatTasks", flatTasks);
+    const flatTasks = allTask.flat()
+    console.log("loggedUserId::1 flatTasks", flatTasks);
 
-  flatTasks.forEach(task => {
+    flatTasks.forEach(task => {
 
-    console.log("flatTasks.forEach::", task);
+      console.log("flatTasks.forEach::", task);
 
-    if (task.status == "To Do") {
-      todoCount++;
-      totalHours += extractHours(task?.time_spent)
-      todoHours += extractHours(task?.time_spent)
-    }
-    else if (task.status == "In Progress") {
-      inProgressCount++;
-      totalHours += extractHours(task?.time_spent)
-      inProgressHours += extractHours(task?.time_spent)
-    }
-    else if (task.status == "Done") {
-      doneCount++;
-      totalHours += extractHours(task?.time_spent)
-      doneHours += extractHours(task?.time_spent)
-    }
-  });
-  console.log("loggedUserId::1 totalProjects", allTask);
-  // console.log("loggedUserId::1 totalTasksCount", totalTasksCount);
-  return res.json({ tasks: totalTaskCount, success: true, done_task: { task: doneCount, hours: doneHours }, inprogress_task: { task: inProgressCount, hours: inProgressHours }, todo_task: { task: todoCount, hours: todoHours }, total_projects: totalProjects.length, total_hours: totalHours })
+      if (task.status == "To Do") {
+        todoCount++;
+        totalHours += extractHours(task?.time_spent)
+        todoHours += extractHours(task?.time_spent)
+      }
+      else if (task.status == "In Progress") {
+        inProgressCount++;
+        totalHours += extractHours(task?.time_spent)
+        inProgressHours += extractHours(task?.time_spent)
+      }
+      else if (task.status == "Done") {
+        doneCount++;
+        totalHours += extractHours(task?.time_spent)
+        doneHours += extractHours(task?.time_spent)
+      }
+    });
+    console.log("loggedUserId::1 totalProjects", allTask);
+    // console.log("loggedUserId::1 totalTasksCount", totalTasksCount);
+    return res.json({ tasks: totalTaskCount, success: true, done_task: { task: doneCount, hours: doneHours }, inprogress_task: { task: inProgressCount, hours: inProgressHours }, todo_task: { task: todoCount, hours: todoHours }, total_projects: totalProjects.length, total_hours: totalHours, success: true })
+  }
+  catch (error) {
+    console.error("Error in getProjectMemberDetails:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
 }
 
+async function getprojectProgressDashboard(req, res) {
+  const userId = req.user._id;
+
+  try {
+    const projects = await project_tbl.find({ pro_ref: userId });
+
+    let CompletedCount = 0;
+    let inProgressCount = 0;
+    let yetToStartCount = 0;
+
+    let CompletedHour = 0;
+    let inProgressHour = 0;
+    let YeToStartHour = 0;
+
+    await Promise.all(
+      projects.map(async (project) => {
+        const tasks = await task_tbl.find({ pro_ref: project._id });
+
+        if (tasks.length === 0 || tasks.every(task => task.status === "To Do")) {
+          yetToStartCount++;
+          YeToStartHour += tasks.reduce((sum, task) => sum + (task.time_spent || 0), 0);
+        } else if (tasks.every(task => task.status === "Done")) {
+          CompletedCount++;
+          // Sum hours if needed
+          CompletedHour += tasks.reduce((sum, task) => sum + (task.time_spent || 0), 0);
+        } else {
+          inProgressCount++;
+          inProgressHour += tasks.reduce((sum, task) => sum + (task.time_spent || 0), 0);
+        }
+      })
+    );
+
+    return res.status(200).json({
+      CompletedProjects: CompletedCount,
+      YeToStartHour: YeToStartHour,
+      inProgressProjects: inProgressCount,
+      yetToStartProjects: yetToStartCount,
+      totalProjects: projects.length,
+      CompletedHour,
+      inProgressHour,
+      msg: "Project progress summary fetched successfully",
+      success: true,
+    });
+
+  } catch (err) {
+    console.error("Error in getProjectProgressDashboard:", err);
+    return res.status(500).json({
+      msg: "Something went wrong in get project progress",
+      success: false,
+    });
+  }
+}
+
+async function getarrivalExpiryTasks(req, res) {
+  const userId = req.user._id;
+  try {
+    const projects = await project_tbl.find({ pro_ref: userId })
+    console.log("all projects of register user::", projects);
+
+    // const allTasks =await Promise.All(
+    //    projects.map(async (project) => {
+    //     const tasks = await task_tbl.find({ pro_ref: project._id })
+    //     return tasks
+    //   })
+    // )
+    const allTasks = await Promise.all(
+      projects.map(async (project) => {
+        const tasks = await task_tbl.find({ pro_ref: project._id });
+        return tasks; // array of tasks per project
+      })
+    );
+    console.log("all projects of register user::1", allTasks);
+    const flatTasks = allTasks.flat();
+    const today = new Date()
+    const startDays = new Date(Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate()
+    ))
+    const endOfSecondDayUTC = new Date(Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate() + 2,
+      23, 59, 59
+    ));
+
+    // const targetDateStr = startDays.toISOString().split('T')[0]
+    const due_tasks = flatTasks.filter(task => {
+      // if (!task.due_date) return false;
+      // const taskDatestr = new Date(task.due_date).toISOString().split('T')[0]
+      // return taskDatestr < targetDateStr
+      const dueDate = new Date(task.due_date);
+      return dueDate >= startDays && dueDate <= endOfSecondDayUTC;
+    })
+    console.log("due_tasks due_tasks::", due_tasks);
+
+    return res.status(200).json({ msg: "get soon exipiry tasks", data: due_tasks, success: true })
+  } catch (error) {
+    console.error("Error in getProjectMemberDetails:", error);
+    return res.status(500).json({ success: false, message: "Internal server error", success: false });
+  }
+}
 
 async function sendMailNotificationtoMembersofTask(project_name, task_name, email) {
   await handleOptSender.sendMail({
@@ -487,4 +596,4 @@ function extractHours(timeStr) {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-module.exports = { handleCreateTask, handleDeleteTask, handleUpdateTask, handleGetTask, handleGetAllTasks, handleUserProjectsAndTaskDetails, getProjectMemberDetails };
+module.exports = { handleCreateTask, handleDeleteTask, handleUpdateTask, handleGetTask, handleGetAllTasks, handleUserProjectsAndTaskDetails, getProjectMemberDetails, getprojectProgressDashboard, getarrivalExpiryTasks };

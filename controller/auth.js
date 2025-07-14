@@ -22,7 +22,7 @@ async function getAllLogedInUser(req, res) {
 }
 async function handleSignup(req, res) {
   try {
-    const { email, password, username ,role} = req.body;
+    const { email, password, username, role } = req.body;
     const image = req.files?.image;
     console.log("log of signup body by mdd::", image);
     const userExist = await signUp.findOne({ email: email })
@@ -33,18 +33,18 @@ async function handleSignup(req, res) {
       username: username,
       email: email,
       password: password,
-      role:role,
+      role: role,
     }
     // if (imageData) {
-      console.log("task dta signup::1",taskData);
-      const imageName = `${Date.now()}_${image.name}`
-      console.log("task dta signup::2",imageName);
-      const imagePath = `./public/users/${imageName}`
-      console.log("task dta signup::3",imagePath);
-      await image.mv(imagePath)
-      console.log("task dta signup::4",imagePath);
-      taskData.image = imageName
-      console.log("task dta signup::5",taskData);
+    console.log("task dta signup::1", taskData);
+    const imageName = `${Date.now()}_${image.name}`
+    console.log("task dta signup::2", imageName);
+    const imagePath = `./public/users/${imageName}`
+    console.log("task dta signup::3", imagePath);
+    await image.mv(imagePath)
+    console.log("task dta signup::4", imagePath);
+    taskData.image = imageName
+    console.log("task dta signup::5", taskData);
 
     // const data = await signUp.create({
     //   username: username,
@@ -70,6 +70,10 @@ async function handleSignin(req, res) {
   try {
 
     const { email, password } = req.body;
+    const userExist = await signUp.findOne({ email: email })
+    if (!userExist) {
+      return res.status(201).json({ msg: "Please register!" })
+    }
     const token = await signUp.matchPassword(email, password)
     console.log("log og token handlsignin::", token);
     const user = await signUp.findOne({ email: email })
@@ -445,6 +449,8 @@ async function handlechangepassword(req, res) {
       password: hashedpwd,
       salt: salt
     }
+    console.log("generateJwtToken role auth::",data);
+    
     const token = generateJwtToken(data)
     const user = await signUp.findByIdAndUpdate({ _id: id }, updatedData)
     console.log("changes password::", user);
