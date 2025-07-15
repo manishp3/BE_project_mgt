@@ -1,14 +1,14 @@
 const express = require("express");
 const app = express();
-require("dotenv").config()
-const cookie = require("cookie-parser")
-const session = require("express-session")
+require("dotenv").config();
+const cookie = require("cookie-parser");
+const session = require("express-session");
 const connectToMongo = require("./connection");
 const autRouter = require("./router/auth");
 const projectRouter = require("./router/project");
 const taskRouter = require("./router/tasks");
 
-const cors = require("cors")
+const cors = require("cors");
 
 
 const fileUplader = require("express-fileupload")
