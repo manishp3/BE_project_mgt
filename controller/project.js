@@ -1,6 +1,5 @@
 const signUp = require("../model");
 const project_tbl = require("../model/project");
-const Project = require("../model/project");
 const task_tbl = require("../model/tasks");
 const { handleOptSender } = require("../service/auth");
 
@@ -14,14 +13,14 @@ async function handleProjectCreate(req, res) {
         }
         console.log("req.user::", req.user?._id);
 
-        const project = await Project.create({
+        const project = await project_tbl.create({
             project_name: project_name,
             pro_ref: req.user?._id,
             members: members || []
         })
 
         setTimeout(() => {
-console.log("im called on mail send project");
+            console.log("im called on mail send project");
             sendMailNotificationtoMembers(project_name, members)
         }, 0);
 
@@ -44,7 +43,7 @@ async function handleGetAllProjects(req, res) {
         // let allProject = [];
 
         if (type === "A") {
-            allProject = await Project.find({ pro_ref: _id })
+            allProject = await project_tbl.find({ pro_ref: _id })
                 .populate("members", "_id email")
                 .sort({ createdAt: -1 });
 
@@ -76,7 +75,7 @@ async function handleGetAllProjects(req, res) {
             });
 
         } else if (type === "S") {
-            allProject = await Project.find({ pro_ref: _id, is_star: 1 }).sort({ createdAt: -1 });
+            allProject = await project_tbl.find({ pro_ref: _id, is_star: 1 }).sort({ createdAt: -1 });
             const userData = await signUp.find({});
 
             const transformedProjects = allProject.map(project => {
@@ -116,7 +115,7 @@ async function handleGetAllProjects(req, res) {
 async function handleGetProjectMembers(req, res) {
     const projectId = req.params.pro_id;
     try {
-        const mem = await Project.findById(projectId).populate("members", "email")
+        const mem = await project_tbl.findById(projectId).populate("members", "email")
         console.log("log og all members::", mem);
 
         if (!mem) return res.status(404).json({ msg: "Project not found" });
@@ -134,7 +133,7 @@ async function handleGetProject(req, res) {
 
 
     try {
-        const project = await Project.findOne({ _id: id }).populate("members", "_id email")
+        const project = await project_tbl.findOne({ _id: id }).populate("members", "_id email")
         // const image = await signUp.find({ _id: project.pro_ref }).select("image -_id")
         const userData = await signUp.find({})
         // const project = await Project.findOne({ _id: id })
@@ -169,106 +168,120 @@ async function handleGetProject(req, res) {
 async function handleProjectUpdate(req, res) {
     const { project_name, members, is_star } = req.body;
     const { id } = req.params;
-    console.log("handleProjectUpdate project_name::", project_name);
-    console.log("handleProjectUpdate project_name updated members::", members);
-    console.log("handleProjectUpdate id::", id);
-    const mem = await Project.findById(id).populate("members", "email")
-    console.log("handleProjectUpdate members::", mem);
+    console.log("handleProjectUpdate ::1", project_name);
+    // console.log("handleProjectUpdate project_name updated members::", members);
+    // console.log("handleProjectUpdate id::", id);
+    const mem = await project_tbl.findById(id).populate("members", "email")
+    console.log("handleProjectUpdate ::1 mem", mem);
+    // console.log("handleProjectUpdate members::", mem);
     try {
+        console.log("handleProjectUpdate ::2 mem", mem);
         // to handle only star prject 
         if (is_star != null) {
-            await Project.findByIdAndUpdate(id, { is_star: is_star })
+            console.log("handleProjectUpdate ::2.1 mem");
+            await project_tbl.findByIdAndUpdate(id, { is_star: is_star })
             return res.status(201).json({ msg: "Project add to Favourite!", success: true })
         }
         if (!project_name) {
             return res.status(404).json({ msg: "No Project name Found!", success: true })
         }
         if (!id && !project_name && !members && !is_star) {
+            console.log("handleProjectUpdate ::2.2 mem");
             return res.status(404).json({ msg: "data not found!" })
         }
         let updateData = {}
+        // if (members) {
+        //     console.log("handleProjectUpdate ::2.2.1 member", members);
+        //     const newMemberIds = members.map(mem => mem.value)
+        //     console.log("handleProjectUpdate ::2.2.2 newMemberIds", newMemberIds);
+        //     updateData.members = newMemberIds
+        //     const oldProject = await project_tbl.findById(id).populate("members", "_id")
+        //     console.log("handleProjectUpdate ::2.2.3 oldProject", oldProject);
+        //     const oldMemberIds = oldProject.members.map(member => member._id.toString())
+        //     console.log("handleProjectUpdate ::2.2.4 oldMemberIds ", oldMemberIds);
+        //     const removedIds = oldMemberIds.filter(oldId => !newMemberIds.include(oldId))
+        //     console.log("handleProjectUpdate ::2.2.5 removeIds ", removedIds);
+
+
+        //     if (removedIds.length > 0) {
+        //         console.log("handleProjectUpdate ::2.2.6");
+        //         await task_tbl.updateMany(
+        //             {
+        //                 pro_ref: id,
+        //                 assign_to: { $in: removedIds }
+
+        //             }
+        //         )
+        //     }
+
+        //     console.log("handleProjectUpdate ::2.3");
+
+
+        //     let latestProjectName = ""
+        //     if (project_name) {
+        //         console.log("handleProjectUpdate ::2.4");
+        //         latestProjectName = project_name
+        //     }
+        //     else {
+        //         console.log("handleProjectUpdate ::2.5");
+        //         const project_db = await project_tbl.findById(id).select("project_name")
+        //         latestProjectName = project_db?.project_name
+        //     }
+        //     console.log("handleProjectUpdate ::2.6");
+
+
+        // }
         if (members) {
-            updateData.members = members.map(mem => mem.value)
+            const newMemberIds = members.map(mem => mem.value); // from UI
+            updateData.members = newMemberIds;
+
+            // Get old members
+            const oldProject = await project_tbl.findById(id).populate("members", "_id");
+            const oldMemberIds = oldProject.members.map(m => m._id.toString());
+
+            // Find removed members
+            const removedMemberIds = oldMemberIds.filter(oldId => !newMemberIds.includes(oldId));
+
+            console.log("Removed members:", removedMemberIds);
+
+            // Set assign_to: null for all tasks assigned to removed members
+            if (removedMemberIds.length > 0) {
+                await task_tbl.updateMany(
+                    {
+                        pro_ref: id,
+                        assign_to: { $in: removedMemberIds }
+                    },
+                    {
+                        $set: { assign_to: null,time_spent:0 }
+                    }
+                );
+            }
             let latestProjectName = ""
             if (project_name) {
+                console.log("handleProjectUpdate ::2.4");
                 latestProjectName = project_name
             }
             else {
+                console.log("handleProjectUpdate ::2.5");
                 const project_db = await project_tbl.findById(id).select("project_name")
                 latestProjectName = project_db?.project_name
             }
-            console.log("log of project name from db::", latestProjectName);
+            console.log("handleProjectUpdate ::2.6");
 
-
-            // setTimeout(() => {
-            //     sendMailNotificationtoMembers(latestProjectName, members)
-            // }, 0);
-            //             await handleOptSender.sendMail({
-            //                 from: process.env.NODE_EMAIL_ADDRESS,
-            //                 to: members.map((mem) => mem.label), // flat array of email strings
-            //                 subject: `You’ve been added to project: ${project_name}`,
-            //                 html: `<html>
-            //     <head>
-            //       <meta charset="UTF-8" />
-            //       <title>Project Assignment</title>
-            //       <style>
-            //         body {
-            //           font-family: Arial, sans-serif;
-            //           background-color: #f4f4f4;
-            //           padding: 20px;
-            //         }
-            //         .email-container {
-            //           max-width: 600px;
-            //           margin: auto;
-            //           background-color: #ffffff;
-            //           padding: 30px;
-            //           border-radius: 8px;
-            //           box-shadow: 0 0 10px rgba(0,0,0,0.05);
-            //         }
-            //         h2 {
-            //           color: #333333;
-            //         }
-            //         p {
-            //           color: #555555;
-            //           line-height: 1.6;
-            //         }
-            //         .footer {
-            //           margin-top: 30px;
-            //           font-size: 12px;
-            //           color: #999999;
-            //           text-align: center;
-            //         }
-            //       </style>
-            //     </head>
-            //     <body>
-            //       <div class="email-container">
-            //         <h2>You've been added to a new project!</h2>
-            //         <p>Hello,</p>
-            //         <p>You have been added as a <strong>member</strong> of the project <strong>"${project_name}"</strong></p>
-            //         <p>You can now collaborate with your team, manage tasks, and track progress.</p>
-            //         <p>If you have any questions, please contact your project admin.</p>
-            //         <div class="footer">
-            //           &copy; 2025 Project Management System. All rights reserved.
-            //         </div>
-            //       </div>
-            //     </body>
-            //   </html>`
-            //             });
         }
+
         console.log("log of project name from db::1");
         if (project_name) {
             console.log("log of project name from db::2");
             updateData.project_name = project_name
         }
-        
+
         console.log("log of project name from db::5", updateData);
 
-        const record = await Project.findByIdAndUpdate(id, updateData)
+        console.log("handleProjectUpdate ::2.7");
+        const record = await project_tbl.findByIdAndUpdate(id, updateData)
+        console.log("handleProjectUpdate ::2.8");
         console.log("log of project name from db::6", record);
-
-        // const record = await Project.findByIdAndUpdate(id, {
-        //     project_name: project_name
-        // })
         return res.status(201).json({ msg: "Project Updated!", success: true, data: record })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in project Update!", success: false })
@@ -282,7 +295,7 @@ async function handleProjectDelete(req, res) {
     console.log("handleProjectUpdate delete::", id);
 
     try {
-        const dId = await Project.findByIdAndDelete({ _id: id })
+        const dId = await project_tbl.findByIdAndDelete({ _id: id })
         await task_tbl.deleteMany({ pro_ref: dId._id })
         return res.status(201).json({ msg: "Project Deleted!", success: true, data: dId._id })
     } catch (error) {

@@ -504,7 +504,11 @@ async function getarrivalExpiryTasks(req, res) {
     const allTasks = await Promise.all(
       projects.map(async (project) => {
         const tasks = await task_tbl.find({ pro_ref: project._id });
-        return tasks; // array of tasks per project
+        const enhancedTask=tasks.map((task)=>({
+          ...task.toObject(),
+          project_id:project._id
+        }))
+        return enhancedTask; // array of tasks per project
       })
     );
     console.log("all projects of register user::1", allTasks);

@@ -16,7 +16,7 @@ router.get("/gettask/:task_id", (req, res) => {
 })
 router.patch("/task_u/:task_id", (req, res) => {
     handleUpdateTask(req, res)
-})
+})  
 router.delete("/task_d/:task_id", (req, res) => {
     handleDeleteTask(req, res)
 })
@@ -31,6 +31,9 @@ router.get("/project_progress", (req, res) => {
 })
 router.get("/soon_expiry_task", (req, res) => {
     getarrivalExpiryTasks(req, res)
+})
+router.get("/projectbytaskid/:task_is", (req, res) => {
+    getProjectByTaskId(req, res)
 })
 
 // router.get("/find_status",(req,res)=>{
