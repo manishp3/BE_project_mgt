@@ -1,5 +1,5 @@
 const express = require("express");
-const { handleSignup, handleSignin,handleLogout, handleVerifyOtp, getAllLogedInUser,handlechangepassword, handleverifyEmailAndSendOtp, handleverifyforgototp, handleForgotpassword,handleUpdateUser } = require("../controller/auth");
+const { handleSignup, handleSignin, handleLogout, handleVerifyOtp, getAllLogedInUser, handlechangepassword, handleverifyEmailAndSendOtp, handleverifyforgototp, handleForgotpassword, handleUpdateUser } = require("../controller/auth");
 
 const router = express.Router();
 router.post("/signup", (req, res) => {
@@ -33,10 +33,10 @@ router.post("/verifyforgototp", async (req, res) => {
 router.post("/forgotpassword", async (req, res) => {
   handleForgotpassword(req, res);
 });
-router.get("/logout",(req,res)=>{
-  handleLogout(req,res)
+router.get("/logout", (req, res) => {
+  handleLogout(req, res)
 })
-router.post("/change-password/",(req,res)=>{
-  handlechangepassword(req,res)
+router.post("/change-password/", (req, res) => {
+  handlechangepassword(req, res)
 })
 module.exports = router;

@@ -65,7 +65,6 @@ async function handleSignup(req, res) {
 
 async function handleSignin(req, res) {
   console.log("handleSignin:", req.body);
-
   //  DONE: add jwt token ,add nodemailer on login time
   try {
 
@@ -76,6 +75,9 @@ async function handleSignin(req, res) {
     }
     const token = await signUp.matchPassword(email, password)
     console.log("log og token handlsignin::", token);
+    if (token == false) {
+      return res.status(201).json({ msg: "Wrong Password!", success: true, code: 401 });
+    }
     const user = await signUp.findOne({ email: email })
     if (!user) {
       return res.status(201).json({ msg: "No User Exist!" })
@@ -87,7 +89,7 @@ async function handleSignin(req, res) {
         // TODO: here put sigend user's email id
         // to: "patadiyamanish07@gmail.com",
         to: email,
-        subject: "Project Management System Forgot Password",
+        subject: "Project Management System Singin OTP",
         html: `<html>
   <head>
     <meta charset="UTF-8" />
@@ -140,7 +142,6 @@ async function handleSignin(req, res) {
       // if already code exist then update it
       if (isExist) {
         await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode })
-
       }
       else {
         await code_tbl.create({
@@ -182,11 +183,11 @@ async function handleVerifyOtp(req, res) {
     console.log("payload3::record", record);
 
     if (!record) {
-      return res.status(404).json({ msg: "No otp found for this mail" })
+      return res.status(201).json({ msg: "No otp found for this mail" })
     }
     console.log("payload4::");
     if (record.code !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP!", success: false })
+      return res.status(201).json({ msg: "Invalid OTP!", success: true, code: 401 })
     }
     console.log("payload5::");
     await code_tbl.deleteOne({ email: userId })
@@ -350,7 +351,7 @@ async function handleverifyforgototp(req, res) {
     }
     console.log("payload4::");
     if (record.code !== otp) {
-      return res.status(404).json({ msg: "Invalid OTP!" })
+      return res.status(201).json({ msg: "Invalid OTP!", success: false, code: 401 })
     }
     console.log("payload5::");
     await code_tbl.deleteOne({ email: userId })
@@ -449,8 +450,8 @@ async function handlechangepassword(req, res) {
       password: hashedpwd,
       salt: salt
     }
-    console.log("generateJwtToken role auth::",data);
-    
+    console.log("generateJwtToken role auth::", data);
+
     const token = generateJwtToken(data)
     const user = await signUp.findByIdAndUpdate({ _id: id }, updatedData)
     console.log("changes password::", user);
