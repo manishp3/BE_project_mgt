@@ -16,10 +16,27 @@ const { validateAuthToken } = require("./middleware/auth");
 app.use(express.urlencoded({ extended: false }));
 // enable for other router;
 // not valtion all bracnh ok
+// app.use(cors({
+//   origin: "http://localhost:3000",
+//   credentials: true,
+// }))
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://fe-project-mgt.vercel.app"
+];
+
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
-}))
+}));
 
 app.use(express.json())
 app.use(cookie())
