@@ -63,99 +63,198 @@ async function handleSignup(req, res) {
   }
 }
 
+// async function handleSignin(req, res) {
+//   console.log("handleSignin:", req.body);
+//   //  DONE: add jwt token ,add nodemailer on login time
+//   try {
+
+//     const { email, password } = req.body;
+//     const userExist = await signUp.findOne({ email: email })
+//     if (!userExist) {
+//       return res.status(201).json({ msg: "Please register!" })
+//     }
+//     const token = await signUp.matchPassword(email, password)
+//     console.log("log og token handlsignin::", token);
+//     if (token == false) {
+//       return res.status(201).json({ msg: "Wrong Password!", success: true, code: 401 });
+//     }
+//     const user = await signUp.findOne({ email: email })
+//     if (!user) {
+//       return res.status(201).json({ msg: "No User Exist!" })
+//     }
+//     if (token) {
+//       const verificationCode = Math.floor(Math.random() * 100000).toString().padStart(5, "0")
+//       const info = await handleOptSender.sendMail({
+//         from: process.env.NODE_EMAIL_ADDRESS,
+//         // TODO: here put sigend user's email id
+//         // to: "patadiyamanish07@gmail.com",
+//         to: email,
+//         subject: "Project Management System Singin OTP",
+//         html: `<html>
+//   <head>
+//     <meta charset="UTF-8" />
+//     <title>Project Management System</title>
+//     <style>
+//       body {
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4;
+//         padding: 20px;
+//       }
+//       .email-container {
+//         max-width: 600px;
+//         margin: auto;
+//         background-color: #ffffff;
+//         padding: 30px;
+//         border-radius: 8px;
+//         box-shadow: 0 0 10px rgba(0,0,0,0.05);
+//       }
+//       h2 {
+//         color: #333333;
+//       }
+//       p {
+//         color: #555555;
+//         line-height: 1.6;
+//       }
+//       .footer {
+//         margin-top: 30px;
+//         font-size: 12px;
+//         color: #999999;
+//         text-align: center;
+//       }
+//     </style>
+//   </head>
+//   <body>
+//     <div class="email-container">
+//       <h3>Welcome to Project Management System</h3>
+//       <p>Hi ${email},</p>
+//       <p>Signin OTP <h2>${verificationCode}</h2></p>
+//       <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
+      
+//       <div class="footer">
+//         &copy; 2025 Project Management System. All rights reserved.
+//       </div>
+//     </div>
+//   </body>
+// </html>`
+//       })
+//       console.log("info", info);
+//       const isExist = await code_tbl.findOne({ email: user._id })
+//       // if already code exist then update it
+//       if (isExist) {
+//         await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode })
+//       }
+//       else {
+//         await code_tbl.create({
+//           email: user._id,
+//           code: verificationCode
+//         })
+//       }
+//       return res.cookie("token", token).status(200).json({ msg: "OTP sent successfully", success: true, token: token })
+//     }
+
+//     return res.status(401).json({ msg: "Unautheticated", success: false })
+//   } catch (error) {
+//     console.error("Error in handleSignin:", error);
+//     return res.status(500).json({ msg: "Internal Server Error singin", success: false });
+//   }
+// }
+
 async function handleSignin(req, res) {
   console.log("handleSignin:", req.body);
-  //  DONE: add jwt token ,add nodemailer on login time
-  try {
 
+  try {
     const { email, password } = req.body;
-    const userExist = await signUp.findOne({ email: email })
+    const userExist = await signUp.findOne({ email });
     if (!userExist) {
-      return res.status(201).json({ msg: "Please register!" })
+      return res.status(201).json({ msg: "Please register!" });
     }
-    const token = await signUp.matchPassword(email, password)
-    console.log("log og token handlsignin::", token);
-    if (token == false) {
+
+    const token = await signUp.matchPassword(email, password);
+    if (!token) {
       return res.status(201).json({ msg: "Wrong Password!", success: true, code: 401 });
     }
-    const user = await signUp.findOne({ email: email })
+
+    const user = await signUp.findOne({ email });
     if (!user) {
-      return res.status(201).json({ msg: "No User Exist!" })
-    }
-    if (token) {
-      const verificationCode = Math.floor(Math.random() * 100000).toString().padStart(5, "0")
-      const info = await handleOptSender.sendMail({
-        from: process.env.NODE_EMAIL_ADDRESS,
-        // TODO: here put sigend user's email id
-        // to: "patadiyamanish07@gmail.com",
-        to: email,
-        subject: "Project Management System Singin OTP",
-        html: `<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Project Management System</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
-      .email-container {
-        max-width: 600px;
-        margin: auto;
-        background-color: #ffffff;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      }
-      h2 {
-        color: #333333;
-      }
-      p {
-        color: #555555;
-        line-height: 1.6;
-      }
-      .footer {
-        margin-top: 30px;
-        font-size: 12px;
-        color: #999999;
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="email-container">
-      <h3>Welcome to Project Management System</h3>
-      <p>Hi ${email},</p>
-      <p>Signin OTP <h2>${verificationCode}</h2></p>
-      <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
-      
-      <div class="footer">
-        &copy; 2025 Project Management System. All rights reserved.
-      </div>
-    </div>
-  </body>
-</html>`
-      })
-      console.log("info", info);
-      const isExist = await code_tbl.findOne({ email: user._id })
-      // if already code exist then update it
-      if (isExist) {
-        await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode })
-      }
-      else {
-        await code_tbl.create({
-          email: user._id,
-          code: verificationCode
-        })
-      }
-      return res.cookie("token", token).status(200).json({ msg: "OTP sent successfully", success: true, token: token })
+      return res.status(201).json({ msg: "No User Exist!" });
     }
 
-    return res.status(401).json({ msg: "Unautheticated", success: false })
+    const verificationCode = Math.floor(Math.random() * 100000)
+      .toString()
+      .padStart(5, "0");
+
+    // Save OTP in DB
+    const isExist = await code_tbl.findOne({ email: user._id });
+    if (isExist) {
+      await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode });
+    } else {
+      await code_tbl.create({ email: user._id, code: verificationCode });
+    }
+
+    // ✅ Respond to client immediately
+    res
+      .cookie("token", token)
+      .status(200)
+      .json({ msg: "OTP sent successfully", success: true, token });
+
+    // 🔄 Send email asynchronously (non-blocking)
+    handleOptSender
+      .sendMail({
+        from: process.env.NODE_EMAIL_ADDRESS,
+        to: email,
+        subject: "Project Management System Signin OTP",
+        html: `
+          <html>
+            <head>
+              <meta charset="UTF-8" />
+              <title>Project Management System</title>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f4f4f4;
+                  padding: 20px;
+                }
+                .email-container {
+                  max-width: 600px;
+                  margin: auto;
+                  background-color: #ffffff;
+                  padding: 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+                }
+                h2 { color: #333333; }
+                p { color: #555555; line-height: 1.6; }
+                .footer {
+                  margin-top: 30px;
+                  font-size: 12px;
+                  color: #999999;
+                  text-align: center;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="email-container">
+                <h3>Welcome to Project Management System</h3>
+                <p>Hi ${email},</p>
+                <p>Signin OTP <h2>${verificationCode}</h2></p>
+                <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
+                <div class="footer">
+                  &copy; 2025 Project Management System. All rights reserved.
+                </div>
+              </div>
+            </body>
+          </html>`,
+      })
+      .then(info => console.log("Email sent:", info))
+      .catch(err => console.error("Email send error:", err));
+
+    return; // Explicit end of function
   } catch (error) {
     console.error("Error in handleSignin:", error);
-    return res.status(500).json({ msg: "Internal Server Error singin", success: false });
+    return res.status(500).json({
+      msg: "Internal Server Error signin",
+      success: false,
+    });
   }
 }
 
