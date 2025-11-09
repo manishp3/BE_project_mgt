@@ -129,7 +129,7 @@ async function handleSignup(req, res) {
 //       <p>Hi ${email},</p>
 //       <p>Signin OTP <h2>${verificationCode}</h2></p>
 //       <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
-      
+
 //       <div class="footer">
 //         &copy; 2025 Project Management System. All rights reserved.
 //       </div>
@@ -164,20 +164,22 @@ async function handleSignin(req, res) {
 
   try {
     const { email, password } = req.body;
-    const userExist = await signUp.findOne({ email });
-    if (!userExist) {
-      return res.status(201).json({ msg: "Please register!" });
+    const user = await signUp.findOne({ email });
+    if (!user) {
+      // not found
+      return res.status(201).json({ msg: "Please register!", status_code: 404 });
     }
 
     const token = await signUp.matchPassword(email, password);
     if (!token) {
-      return res.status(201).json({ msg: "Wrong Password!", success: true, code: 401 });
+      // unauthenticate
+      return res.status(201).json({ msg: "Wrong Password!", success: true, status_code: 401 });
     }
 
-    const user = await signUp.findOne({ email });
-    if (!user) {
-      return res.status(201).json({ msg: "No User Exist!" });
-    }
+    // const user = await signUp.findOne({ email });
+    // if (!user) {
+    //   return res.status(201).json({ msg: "No User Exist!", status_code: 401 });
+    // }
 
     const verificationCode = Math.floor(Math.random() * 100000)
       .toString()
@@ -195,7 +197,7 @@ async function handleSignin(req, res) {
     res
       .cookie("token", token)
       .status(200)
-      .json({ msg: "OTP sent successfully", success: true, token });
+      .json({ msg: "OTP sent successfully", success: true, status_code: 200, token });
 
     // 🔄 Send email asynchronously (non-blocking)
     handleOptSender
@@ -315,10 +317,13 @@ async function handleverifyEmailAndSendOtp(req, res) {
   try {
     if (!email) {
       return res
-        .status(404)
+        .status(200)
         .json({
           msg: "Please Enter eMail!",
-          success: false
+          success: false,
+          status_code: 404
+
+
         });
     }
     const user = await signUp.findOne({ email })
@@ -326,13 +331,46 @@ async function handleverifyEmailAndSendOtp(req, res) {
 
     if (!user) {
       return res
-        .status(404)
+        .status(200)
         .json({
           msg: "No eMail Found! ",
-          success: false
+          success: false,
+          status_code: 404
         });
     }
     const code = Math.floor(Math.random() * 100000).toString().padStart(5, "0")
+
+    // of otp exist with same mail then update it 
+    const isExist = await code_tbl.findOne({ email: user._id });
+
+    // if already code exist then update it
+    console.log("exist in forgot::", isExist);
+    console.log("exist in forgot::user", user);
+
+    if (isExist) {
+      console.log("exist in forgot::userid:", user._id);
+
+      await code_tbl.findOneAndUpdate({ email: user._id }, { code: code })
+
+    } else {
+
+      await code_tbl.create({
+        email: user._id,
+        code: code
+      })
+    }
+    // req.session.user_id = user._id;
+    res
+      .status(201)
+      .json({
+        msg: "OTP for Forgot Password Sent Succesfully! ",
+        success: true,
+        // TODO: remove this code does not sent in return 
+        otp: code,
+        email: user._id,
+        status_code: 200
+      });
+
     const info = await handleOptSender.sendMail({
       from: process.env.NODE_EMAIL_ADDRESS,
       // TODO: here put sigend user's email id
@@ -387,36 +425,7 @@ async function handleverifyEmailAndSendOtp(req, res) {
   </body>
 </html>`
     })
-
-    // of otp exist with same mail then update it 
-    const isExist = await code_tbl.findOne({ email: user._id });
-
-    // if already code exist then update it
-    console.log("exist in forgot::", isExist);
-    console.log("exist in forgot::user", user);
-
-    if (isExist) {
-      console.log("exist in forgot::userid:", user._id);
-
-      await code_tbl.findOneAndUpdate({ email: user._id }, { code: code })
-
-    } else {
-
-      await code_tbl.create({
-        email: user._id,
-        code: code
-      })
-    }
-    // req.session.user_id = user._id;
-    return res
-      .status(201)
-      .json({
-        msg: "OTP for Forgot Password Sent Succesfully! ",
-        success: true,
-        // TODO: remove this code does not sent in return 
-        otp: code,
-        email: user._id
-      });
+    return;
 
   } catch (error) {
     return res
@@ -446,18 +455,18 @@ async function handleverifyforgototp(req, res) {
     console.log("payload3::record:: otp", otp);
 
     if (!record) {
-      return res.status(404).json({ msg: "No otp found for this mail" })
+      return res.status(200).json({ msg: "No otp found for this mail", status_code: 404 })
     }
     console.log("payload4::");
     if (record.code !== otp) {
-      return res.status(201).json({ msg: "Invalid OTP!", success: false, code: 401 })
+      return res.status(201).json({ msg: "Invalid OTP!", success: false, status_code: 401 })
     }
     console.log("payload5::");
     await code_tbl.deleteOne({ email: userId })
     // req.session.destroy();
     console.log("payload6::");
 
-    return res.status(200).json({ msg: "OTP Verified!", success: true })
+    return res.status(200).json({ msg: "OTP Verified!", success: true, status_code: 200 })
   } catch (error) {
     return res
       .status(500)
@@ -472,7 +481,7 @@ async function handleForgotpassword(req, res) {
   const { password, user_id } = req.body;
   try {
     if (!user_id || !password) {
-      return res.status(404).json({ msg: "Fill All Data!" })
+      return res.status(200).json({ msg: "Fill All Data!", status_code: 400 })
 
     }
     const salt = randomBytes(16).toString();
@@ -484,7 +493,7 @@ async function handleForgotpassword(req, res) {
     const user = await signUp.findByIdAndUpdate({ _id: user_id }, updatedData)
     console.log("updated password::", user);
 
-    return res.status(200).json({ msg: "Password Updated!", success: true, id: user._id })
+    return res.status(200).json({ msg: "Password Updated!", success: true, id: user._id, status_code: 200 })
   } catch (error) {
     return res
       .status(500)
@@ -540,9 +549,15 @@ async function handlechangepassword(req, res) {
     console.log("oldPassword id ::", oldPassword, id);
     console.log("oldPassword id ::data", data);
     if (!data) {
-      return res.status(401).json({ msg: "no Account found", success: false })
+      return res.status(200).json({ msg: "no Account found", success: false, status_code: 401 })
     }
     const retuedData = await signUp.matchPassword(data.email, oldPassword)
+    console.log("log of data when be hcange", retuedData);
+
+    if (!retuedData) {
+
+      return res.status(200).json({ msg: "wrong password", success: false, status_code: 404 })
+    }
     const salt = randomBytes(16).toString();
     const hashedpwd = createHmac("sha256", salt).update(newPassword).digest("hex")
     const updatedData = {
@@ -554,7 +569,7 @@ async function handlechangepassword(req, res) {
     const token = generateJwtToken(data)
     const user = await signUp.findByIdAndUpdate({ _id: id }, updatedData)
     console.log("changes password::", user);
-    return res.status(200).json({ msg: "User Password Updated!", success: true, update_user: data, token: token })
+    return res.status(200).json({ msg: "User Password Updated!", success: true, update_user: data, token: token, status_code: 200 })
   } catch (err) {
     return res.status(500).json({ msg: "Something went wrong in Change Password!", success: false, error: err })
   }
